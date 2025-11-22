@@ -122,7 +122,6 @@ export class CognitoClient {
     codeVerifier: string
   ): Promise<CognitoTokenResponse> {
     // Prepare request body (application/x-www-form-urlencoded)
-    // Note: Don't include client_secret in body when using Basic Auth
     const body = new URLSearchParams({
       grant_type: 'authorization_code',
       client_id: this.config.clientId,
@@ -131,21 +130,26 @@ export class CognitoClient {
       code_verifier: codeVerifier,
     });
 
-    // Create Basic Auth header for client authentication
-    // Cognito requires client credentials via HTTP Basic Auth when client has a secret
-    const credentials = Buffer.from(`${this.config.clientId}:${this.config.clientSecret}`).toString('base64');
-
     // Create abort controller for timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
+    // Build headers - use Basic Auth if client secret is provided, otherwise just send client_id
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    };
+
+    if (this.config.clientSecret) {
+      // Confidential client: use Basic Auth
+      const credentials = Buffer.from(`${this.config.clientId}:${this.config.clientSecret}`).toString('base64');
+      headers['Authorization'] = `Basic ${credentials}`;
+    }
+    // For public clients, client_id is already in the body
+
     try {
       const response = await fetch(this.config.tokenEndpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Authorization': `Basic ${credentials}`,
-        },
+        headers,
         body: body.toString(),
         signal: controller.signal,
       });
@@ -255,20 +259,26 @@ export class CognitoClient {
       refresh_token: refreshToken,
     });
 
-    // Create Basic Auth header for client authentication
-    const credentials = Buffer.from(`${this.config.clientId}:${this.config.clientSecret}`).toString('base64');
-
     // Create abort controller for timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
+    // Build headers - use Basic Auth if client secret is provided, otherwise just send client_id
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    };
+
+    if (this.config.clientSecret) {
+      // Confidential client: use Basic Auth
+      const credentials = Buffer.from(`${this.config.clientId}:${this.config.clientSecret}`).toString('base64');
+      headers['Authorization'] = `Basic ${credentials}`;
+    }
+    // For public clients, client_id is already in the body
+
     try {
       const response = await fetch(this.config.tokenEndpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Authorization': `Basic ${credentials}`,
-        },
+        headers,
         body: body.toString(),
         signal: controller.signal,
       });

@@ -13,7 +13,7 @@ import { getAuthProvider } from '../config';
 export interface CognitoConfig {
   userPoolId: string;               // e.g., "us-east-1_ABC123"
   clientId: string;                 // OAuth 2.0 App Client ID
-  clientSecret: string;             // OAuth 2.0 App Client Secret
+  clientSecret?: string;            // OAuth 2.0 App Client Secret (optional for public clients)
   region: string;                   // AWS region (e.g., "us-east-1")
   redirectUri: string;              // OAuth callback URL
   domain: string;                   // Cognito domain
@@ -96,9 +96,7 @@ export function validateCognitoConfig(config: CognitoConfig): void {
     throw new CognitoConfigurationError('COGNITO_CLIENT_ID is required');
   }
   
-  if (!config.clientSecret) {
-    throw new CognitoConfigurationError('COGNITO_CLIENT_SECRET is required');
-  }
+  // clientSecret is now optional (for public clients)
   
   if (!config.region) {
     throw new CognitoConfigurationError('COGNITO_REGION is required');
@@ -141,11 +139,10 @@ export function loadCognitoConfig(): CognitoConfig | null {
     allCognitoEnvVars: Object.keys(process.env).filter(k => k.startsWith('COGNITO_'))
   });
   
-  // Validate required fields
+  // Validate required fields (clientSecret is now optional)
   const missingVars: string[] = [];
   if (!userPoolId) missingVars.push('COGNITO_USER_POOL_ID');
   if (!clientId) missingVars.push('COGNITO_CLIENT_ID');
-  if (!clientSecret) missingVars.push('COGNITO_CLIENT_SECRET');
   if (!region) missingVars.push('COGNITO_REGION');
   
   if (missingVars.length > 0) {
@@ -185,7 +182,7 @@ export function loadCognitoConfig(): CognitoConfig | null {
   const config: CognitoConfig = {
     userPoolId: userPoolId!,
     clientId: clientId!,
-    clientSecret: clientSecret!,
+    clientSecret: clientSecret || undefined,  // Optional for public clients
     region: region!,
     redirectUri,
     domain,

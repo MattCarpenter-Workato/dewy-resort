@@ -22,8 +22,12 @@ interface LoginRequest {
 
 /**
  * Calculate SECRET_HASH for Cognito API calls
+ * Returns undefined for public clients (no secret)
  */
-function calculateSecretHash(username: string, clientId: string, clientSecret: string): string {
+function calculateSecretHash(username: string, clientId: string, clientSecret?: string): string | undefined {
+  if (!clientSecret) {
+    return undefined; // Public client - no secret hash needed
+  }
   const message = username + clientId;
   const hmac = createHmac('sha256', clientSecret);
   hmac.update(message);
@@ -67,7 +71,7 @@ export async function POST(request: NextRequest) {
       credentials: undefined,
     });
 
-    // Calculate SECRET_HASH
+    // Calculate SECRET_HASH (only for confidential clients)
     const secretHash = calculateSecretHash(email, config.clientId, config.clientSecret);
 
     // Debug logging
@@ -76,17 +80,25 @@ export async function POST(request: NextRequest) {
       userPoolId: config.userPoolId,
       region: config.region,
       email: email,
+      hasSecret: !!config.clientSecret,
     });
+
+    // Build auth parameters
+    const authParameters: Record<string, string> = {
+      USERNAME: email,
+      PASSWORD: password,
+    };
+
+    // Only include SECRET_HASH if client has a secret (confidential client)
+    if (secretHash) {
+      authParameters.SECRET_HASH = secretHash;
+    }
 
     // Initiate authentication
     const command = new InitiateAuthCommand({
       AuthFlow: AuthFlowType.USER_PASSWORD_AUTH,
       ClientId: config.clientId,
-      AuthParameters: {
-        USERNAME: email,
-        PASSWORD: password,
-        SECRET_HASH: secretHash,
-      },
+      AuthParameters: authParameters,
     });
 
     const response = await client.send(command);

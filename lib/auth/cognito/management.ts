@@ -53,7 +53,7 @@ export class CognitoManagementClient {
   private client: CognitoIdentityProviderClient;
   private userPoolId: string;
   private clientId: string;
-  private clientSecret: string;
+  private clientSecret?: string;
 
   /**
    * Create a new Cognito Management Client
@@ -76,11 +76,15 @@ export class CognitoManagementClient {
   /**
    * Calculate SECRET_HASH for Cognito API calls
    * Required when the app client has a client secret configured
+   * Returns undefined for public clients (no secret)
    * 
    * @param username - Username to hash
-   * @returns Base64-encoded HMAC-SHA256 hash
+   * @returns Base64-encoded HMAC-SHA256 hash or undefined for public clients
    */
-  private calculateSecretHash(username: string): string {
+  private calculateSecretHash(username: string): string | undefined {
+    if (!this.clientSecret) {
+      return undefined; // Public client - no secret hash needed
+    }
     const message = username + this.clientId;
     const hmac = createHmac('sha256', this.clientSecret);
     hmac.update(message);
@@ -116,17 +120,23 @@ export class CognitoManagementClient {
         },
       ];
 
-      // Calculate SECRET_HASH (required when client has a secret)
+      // Calculate SECRET_HASH (required when client has a secret, omit for public clients)
       const secretHash = this.calculateSecretHash(request.email);
 
       // Create user using public SignUp command (no AWS credentials needed)
-      const command = new SignUpCommand({
+      const commandInput: any = {
         ClientId: this.clientId,
-        SecretHash: secretHash,
         Username: request.email, // Use email as username
         Password: request.password,
         UserAttributes: userAttributes,
-      });
+      };
+
+      // Only include SecretHash if client has a secret (confidential client)
+      if (secretHash) {
+        commandInput.SecretHash = secretHash;
+      }
+
+      const command = new SignUpCommand(commandInput);
 
       const response = await this.client.send(command);
 
