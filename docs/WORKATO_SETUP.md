@@ -50,7 +50,7 @@ The architecture implements:
 
 **Example: Guest Check-In Orchestrator**
 
-![Guest Check-In Flow](../architecture/guest-checkin-flow.png)
+![Guest Check-In Flow](./architecture/guest-checkin-flow.png)
 *Guest Check-In orchestrator workflow - Multi-object state transition*
 
 When an MCP tool calls `POST /check-in-guest {guest_email, check_in_date}`:
@@ -75,7 +75,7 @@ When an MCP tool calls `POST /check-in-guest {guest_email, check_in_date}`:
 **Execution Time:** < 3 seconds | **API Operations:** 6 calls (3 reads + 3 updates)
 
 **Additional Orchestrator Flows:**
-See [`docs/architecture/`](../architecture/) for detailed visualizations:
+See [`docs/architecture/`](./architecture) for detailed visualizations:
 - Guest Checkout - Payment processing and room release
 - Guest Service Request - Service case creation
 - Maintenance Request - Staff maintenance workflows
@@ -243,16 +243,16 @@ You should see the Workato CLI version and authentication status.
 
 ### Step 2: Configure Workato API Token
 
-1. Log in to your Workato account: https://app.workato.com
+1. Log in to your Workato account: https://app.trial.workato.com (if using a Developer sandbox--recommended)
 2. Navigate to **Settings** → **API Keys & Clients**
 3. Create a new API key with these permissions:
-   - Projects/Project Assets:
+   - **Projects** → **Project Assets** :
       - Projects & folders, Connections, Recipes, Recipe Versions (select all)
-   - Projects/Recipe Lifecycle Management:
+   - **Projects** → **Recipe Lifecycle Management**:
       - Recipe lifecycle management, Export manifests (select all)
-   - Tools/API Platform:
+   - **Tools** → **API Platform**:
       - Collections & endpoints (select everything except 2 OpenAPI-related perms)
-   - Admin/Workspace Details:
+   - **Admin** → **Workspace Details**:
       - Workspace details (select all)
 4. Save changes
 5. Copy the API token
@@ -398,7 +398,7 @@ These recipes require manual activation due to a **metadata caching issue** in W
 For **each** of the 4 Salesforce SOQL recipes:
 
 1. **Navigate to the recipe:**
-   - Log in to Workato: https://app.workato.com
+   - Log in to Workato: https://app.trial.workato.com (if using Developer Sandbox -- recommended)
    - Go to **Projects** → **atomic-salesforce-recipes**
    - Find the recipe (e.g., "Search bookings by room and dates")
 
@@ -411,7 +411,7 @@ For **each** of the 4 Salesforce SOQL recipes:
    - In the recipe canvas, locate the **Salesforce** action (usually the second step)
    - Click on the action to select it
    - In the right-hand panel, click **"Edit"**
-   - Select your **Salesforce connection** from the dropdown (e.g., "zt_dev_account" or your connection name)
+   - Select your **Salesforce connection** from the dropdown (e.g., "sf_dev_account" or your connection name)
    - Verify the SOQL query appears correctly
    - Click **"Done"** or **"Save"** in the action panel
 
@@ -565,7 +565,7 @@ curl -X POST "https://apim.workato.com/your-collection-id/search_room_by_number"
    cd salesforce
    ../bin/sf data import tree --plan data/data-plan.json --target-org myDevOrg
    ```
-
+   Note: You may need to delete Account records first, if any have been imported.
 ---
 
 ### make workato-init Fails
@@ -578,7 +578,7 @@ curl -X POST "https://apim.workato.com/your-collection-id/search_room_by_number"
    ```bash
    make status tool=workato
    ```
-3. If authentication fails, regenerate API token in Workato settings
+3. If authentication still fails, check that you have granted all permissions to your API client in Workato settings
 
 ---
 
