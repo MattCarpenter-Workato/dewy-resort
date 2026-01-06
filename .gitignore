@@ -57,6 +57,7 @@ workato/temp-*/
 # salesforce CLI
 .sf/                            # Salesforce CLI configuration
 .sfdx/                          # Salesforce DX configuration (legacy)
+sf-cli/                         # Salesforce CLI binary
 
 # runtime files
 /var/
